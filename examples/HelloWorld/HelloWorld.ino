@@ -15,5 +15,5 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(3000);
   Serial.print("Utf8 zh_CN string length : ");
-  Serial.println(Utf8GetLength(gUtf8ZhString));
+  Serial.println(utf8GetLength(gUtf8ZhString));
 }

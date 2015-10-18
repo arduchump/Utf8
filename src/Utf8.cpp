@@ -1,5 +1,5 @@
 
-#include "Utf8.h"
+#include "utf8.h"
 #include <Arduino.h>
 
 #define ENSURE(condition) do { if (!(condition)) {Serial.println("ENSURE failed at: "#condition); while(1); } } while(0)
@@ -8,7 +8,7 @@
 #define PTR_OFFSET_BETWEEN(ptrBegin, ptrEnd) ((char*)(ptrEnd) - (char*)(ptrBegin))
 
 size_t
-Utf8GetBytesToNextChar( const char aChar )
+utf8GetBytesToNextChar( const char aChar )
 {
   /**
    * utf-8 skip data extract from glibc.
@@ -29,7 +29,7 @@ Utf8GetBytesToNextChar( const char aChar )
 }
 
 uint8_t
-Utf8GetHeaderMask( uint8_t bytesToNextChar )
+utf8GetHeaderMask( uint8_t bytesToNextChar )
 {
   /** the 0 element is unused */
   static const uint8_t s_header_mask[7] =
@@ -43,21 +43,21 @@ Utf8GetHeaderMask( uint8_t bytesToNextChar )
 }
 
 uint8_t
-Utf8GetHeaderShift( const uint8_t bytesToNextChar )
+utf8GetHeaderShift( const uint8_t bytesToNextChar )
 {
   return ( bytesToNextChar - 1 ) * 6;
 }
 
 uint32_t
-Utf8ToUtf32( const char * str )
+utf8ToUtf32( const char * str )
 {
 	uint8_t		bytesToNextChar;
 	size_t		shift = 0;
 	uint32_t 	result = 0;
 
-	bytesToNextChar = Utf8GetBytesToNextChar( *str );
-	shift = Utf8GetHeaderShift( bytesToNextChar );
-	result |= ( ((*str) & Utf8GetHeaderMask( bytesToNextChar )) << shift );
+	bytesToNextChar = utf8GetBytesToNextChar( *str );
+	shift = utf8GetHeaderShift( bytesToNextChar );
+	result |= ( ((*str) & utf8GetHeaderMask( bytesToNextChar )) << shift );
 
 	while( shift > 0 )
 	{
@@ -71,7 +71,7 @@ Utf8ToUtf32( const char * str )
 }
 
 size_t
-Utf8ToUtf32String(
+utf8ToUtf32String(
 	uint32_t * 		utf32Str,
 	const char * 	str,
 	const size_t 	strSize
@@ -85,9 +85,9 @@ Utf8ToUtf32String(
 
 		while( str < utf8_end  )
 		{
-			*( utf32Str ++ ) = Utf8ToUtf32( str );
+			*( utf32Str ++ ) = utf8ToUtf32( str );
 
-			str = Utf8FindNextChar( str );
+			str = utf8FindNextChar( str );
 		}
 	}
 	else
@@ -95,9 +95,9 @@ Utf8ToUtf32String(
 		/* wait for '\0' */
 		while( *str )
 		{
-			*( utf32Str ++ ) = Utf8ToUtf32( str );
+			*( utf32Str ++ ) = utf8ToUtf32( str );
 
-			str = Utf8FindNextChar( str );
+			str = utf8FindNextChar( str );
 		}
 	}
 
@@ -107,7 +107,7 @@ Utf8ToUtf32String(
 }
 
 size_t
-Utf8CalculateSizeFromUtf32( const uint32_t value )
+utf8CalculateSizeFromUtf32( const uint32_t value )
 {
   if( value <= 0x7F )
   {
@@ -140,21 +140,21 @@ Utf8CalculateSizeFromUtf32( const uint32_t value )
 }
 
 size_t
-Utf8CalculateSizeFromUtf32String( const uint32_t *strBegin, const uint32_t * strEnd )
+utf8CalculateSizeFromUtf32String( const uint32_t *strBegin, const uint32_t * strEnd )
 {
   const uint32_t * iterator = strBegin;
   size_t result = 0;
 
   while( iterator < strEnd )
   {
-    result += Utf8CalculateSizeFromUtf32( *iterator );
+    result += utf8CalculateSizeFromUtf32( *iterator );
   }
 
   return result;
 }
 
 size_t
-Utf8FromUtf32( char * str, const uint32_t value )
+utf8FromUtf32( char * str, const uint32_t value )
 {
 	static char headerMarks[8] =
 		{
@@ -171,10 +171,10 @@ Utf8FromUtf32( char * str, const uint32_t value )
 	uint8_t		bytesToNextChar;
 	char *		begin = str;
 
-	bytesToNextChar = Utf8CalculateSizeFromUtf32( value ) ;
+	bytesToNextChar = utf8CalculateSizeFromUtf32( value ) ;
 
-	shift = Utf8GetHeaderShift( bytesToNextChar );
-	*str = ( ( value >> shift ) & Utf8GetHeaderMask( bytesToNextChar ) )
+	shift = utf8GetHeaderShift( bytesToNextChar );
+	*str = ( ( value >> shift ) & utf8GetHeaderMask( bytesToNextChar ) )
 		| headerMarks[bytesToNextChar] ;
 
 	while( shift > 0 )
@@ -189,7 +189,7 @@ Utf8FromUtf32( char * str, const uint32_t value )
 }
 
 size_t
-Utf8FromUtf32String(
+utf8FromUtf32String(
 	char * 			str,
 	const uint32_t *utf32Str,
 	const size_t 	utf32StrSize
@@ -203,7 +203,7 @@ Utf8FromUtf32String(
 
 		while( utf32Str < utf32StrEnd )
 		{
-			result += Utf8FromUtf32( str, *utf32Str );
+			result += utf8FromUtf32( str, *utf32Str );
 
 			++ utf32Str;
 		}
@@ -212,7 +212,7 @@ Utf8FromUtf32String(
 	{
 		while( *utf32Str )
 		{
-			result += Utf8FromUtf32( str, *utf32Str );
+			result += utf8FromUtf32( str, *utf32Str );
 
 			++ utf32Str;
 		}
@@ -225,39 +225,39 @@ Utf8FromUtf32String(
 
 
 bool
-Utf8IsStartMarker( const char aChar )
+utf8IsStartMarker( const char aChar )
 {
   return 0x80 != ( aChar & 0xC0 );
 }
 
 char *
-Utf8FindNextChar( const char * str )
+utf8FindNextChar( const char * str )
 {
   /* validate the current str */
-  if( ! Utf8IsStartMarker( *str ) )
+  if( ! utf8IsStartMarker( *str ) )
   {
-    while( !Utf8IsStartMarker( * ( ++ str ) ) ) {};
+    while( !utf8IsStartMarker( * ( ++ str ) ) ) {};
 
     return const_cast<char*>( str );
   }
 
-  return (char *)PTR_OFFSET_BYTES( str, Utf8GetBytesToNextChar( *str )  );
+  return (char *)PTR_OFFSET_BYTES( str, utf8GetBytesToNextChar( *str )  );
 };
 
 char *
-Utf8FindPriorChar( const char * str )
+utf8FindPriorChar( const char * str )
 {
-  while( !Utf8IsStartMarker( * ( -- str ) ) ) {};
+  while( !utf8IsStartMarker( * ( -- str ) ) ) {};
 
   return const_cast<char *>(str);
 };
 
 char *
-Utf8SkipCharsForward( const char *str, size_t distance )
+utf8SkipCharsForward( const char *str, size_t distance )
 {
   while( ( distance > 0 ) && ( *str != 0 ) )
   {
-    str = Utf8FindNextChar( str );
+    str = utf8FindNextChar( str );
     -- distance;
   };
 
@@ -265,11 +265,11 @@ Utf8SkipCharsForward( const char *str, size_t distance )
 }
 
 char *
-Utf8SkipCharsBackward( const char *str, size_t distance )
+utf8SkipCharsBackward( const char *str, size_t distance )
 {
   while( distance > 0 )
   {
-    str = Utf8FindPriorChar( str );
+    str = utf8FindPriorChar( str );
     -- distance;
   };
 
@@ -277,21 +277,21 @@ Utf8SkipCharsBackward( const char *str, size_t distance )
 }
 
 size_t
-Utf8GetLength( const char * str )
+utf8GetLength( const char * str )
 {
   size_t length = 0;
 
   while( * str )
   {
     ++ length;
-    str = Utf8FindNextChar( str );
+    str = utf8FindNextChar( str );
   }
 
   return length;
 };
 
 void
-Utf8GetLengthAndSize( const char * str, size_t &length, size_t &size )
+utf8GetLengthAndSize( const char * str, size_t &length, size_t &size )
 {
   size_t skipBytes;
 
@@ -300,7 +300,7 @@ Utf8GetLengthAndSize( const char * str, size_t &length, size_t &size )
 
   while( * str )
   {
-    skipBytes = Utf8GetBytesToNextChar( *str );
+    skipBytes = utf8GetBytesToNextChar( *str );
 
     ++ length;
     size += skipBytes;
@@ -310,13 +310,13 @@ Utf8GetLengthAndSize( const char * str, size_t &length, size_t &size )
 }
 
 size_t
-Utf8GetLengthBetween( const char * strBegin, const char * strEnd )
+utf8GetLengthBetween( const char * strBegin, const char * strEnd )
 {
   size_t result = 0;
 
   while( strBegin < strEnd )
   {
-    strBegin = Utf8FindNextChar( strBegin );
+    strBegin = utf8FindNextChar( strBegin );
     ++ result;
   }
 
@@ -324,20 +324,20 @@ Utf8GetLengthBetween( const char * strBegin, const char * strEnd )
 }
 
 size_t
-Utf8GetSizeBetween( const char * strBegin, const char * strEnd )
+utf8GetSizeBetween( const char * strBegin, const char * strEnd )
 {
   const char * iterator = strBegin;
 
   while( iterator < strEnd )
   {
-    iterator = Utf8FindNextChar( iterator );
+    iterator = utf8FindNextChar( iterator );
   }
 
   return PTR_OFFSET_BETWEEN( strBegin, strEnd ) ;
 }
 
 void
-Utf8GetLengthAndSizeBetween(
+utf8GetLengthAndSizeBetween(
   const char * strBegin,
   const char * strEnd,
   size_t &length,
@@ -348,7 +348,7 @@ Utf8GetLengthAndSizeBetween(
   length = 0;
   while( iterator < strEnd )
   {
-    iterator = Utf8FindNextChar( iterator );
+    iterator = utf8FindNextChar( iterator );
     ++ length;
   }
 
@@ -356,13 +356,13 @@ Utf8GetLengthAndSizeBetween(
 }
 
 ptrdiff_t
-Utf8GetSizeFromLength( const char * str, size_t length )
+utf8GetSizeFromLength( const char * str, size_t length )
 {
   const char * strBegin = str;
 
   while( length -- > 0 )
   {
-    str = Utf8FindNextChar( str );
+    str = utf8FindNextChar( str );
   };
 
   return PTR_OFFSET_BETWEEN( strBegin, str );
