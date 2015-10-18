@@ -14,7 +14,7 @@ utf8GetBytesToNextChar( const char aChar )
    * utf-8 skip data extract from glibc.
    * the last 0xFE, 0xFF use as special using ( file BOM header )
    */
-  static const uint8_t s_skip_data[256] =
+  static const uint8_t s_skip_data[256] PROGMEM =
   {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -25,21 +25,21 @@ utf8GetBytesToNextChar( const char aChar )
     2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
     3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,6,6,1,1,
   };
-  return s_skip_data[ static_cast<uint8_t>( aChar ) ];
+  return (uint8_t)pgm_read_byte(s_skip_data + (uint8_t)(aChar));
 }
 
 uint8_t
 utf8GetHeaderMask( uint8_t bytesToNextChar )
 {
   /** the 0 element is unused */
-  static const uint8_t s_header_mask[7] =
+  static const uint8_t s_header_mask[7] PROGMEM =
   {
     0x00, 0x7F, 0x1F, 0x0F, 0x07, 0x03, 0x01,
   };
 
   ENSURE( bytesToNextChar < SIZE_OF_ARRAY(s_header_mask) );
 
-  return s_header_mask[bytesToNextChar];
+  return (uint8_t)pgm_read_byte(s_header_mask + (uint8_t)(bytesToNextChar));
 }
 
 uint8_t
@@ -156,7 +156,7 @@ utf8CalculateSizeFromUtf32String( const uint32_t *strBegin, const uint32_t * str
 size_t
 utf8FromUtf32( char * str, const uint32_t value )
 {
-	static char headerMarks[8] =
+	static const char headerMarks[8] PROGMEM =
 		{
 			0,
 			0,
@@ -175,7 +175,7 @@ utf8FromUtf32( char * str, const uint32_t value )
 
 	shift = utf8GetHeaderShift( bytesToNextChar );
 	*str = ( ( value >> shift ) & utf8GetHeaderMask( bytesToNextChar ) )
-		| headerMarks[bytesToNextChar] ;
+		| (uint8_t)pgm_read_byte(headerMarks + (uint8_t)(bytesToNextChar));
 
 	while( shift > 0 )
 	{
