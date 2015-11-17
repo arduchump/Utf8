@@ -57,14 +57,14 @@ utf8ToUtf32( const char * str )
 
 	bytesToNextChar = utf8GetBytesToNextChar( *str );
 	shift = utf8GetHeaderShift( bytesToNextChar );
-	result |= ( ((*str) & utf8GetHeaderMask( bytesToNextChar )) << shift );
+	result |= ( (((uint32_t)(uint8_t)*str) & (uint32_t)utf8GetHeaderMask( bytesToNextChar )) << shift );
 
 	while( shift > 0 )
 	{
 		++ str;
 		shift -= 6;
 
-		result |= ( ( (*str) & 0x3F ) << shift );
+		result |= ( ( ((uint32_t)(uint8_t)*str) & 0x3F ) << shift );
 	}
 
 	return result;
