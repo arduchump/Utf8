@@ -5,6 +5,7 @@
 #include <inttypes.h>
 
 typedef char utf8_t;
+typedef class __FlashStringHelper Utf8FChar;
 
 size_t
 utf8GetBytesToNextChar( const char aChar );
@@ -32,6 +33,9 @@ utf8GetHeaderShift( const uint8_t bytesToNextChar );
  */
 uint32_t
 utf8ToUtf32( const char * str );
+
+uint32_t
+utf8ToUtf32( const Utf8FChar * str );
 
 size_t
 utf8ToUtf32String(
@@ -75,6 +79,9 @@ utf8IsStartMarker( const char aChar );
  */
 char *
 utf8FindNextChar( const char * str );
+
+Utf8FChar *
+utf8FindNextChar( const Utf8FChar * str );
 
 /**
  * find prior character from the given utf8 string

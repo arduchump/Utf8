@@ -70,6 +70,27 @@ utf8ToUtf32( const char * str )
 	return result;
 }
 
+uint32_t
+utf8ToUtf32( const Utf8FChar * str )
+{
+	uint8_t		bytesToNextChar;
+	size_t		shift = 0;
+	uint32_t 	result = 0;
+
+	bytesToNextChar = utf8GetBytesToNextChar( pgm_read_byte_far(str) );
+	shift = utf8GetHeaderShift( bytesToNextChar );
+	result |= ( (((uint32_t)(uint8_t)pgm_read_byte_far(str)) & (uint32_t)utf8GetHeaderMask( bytesToNextChar )) << shift );
+
+	while( shift > 0 )
+	{
+		str = (const Utf8FChar *)((char *)(str) + 1);
+		shift -= 6;
+		result |= ( ( ((uint32_t)(uint8_t)pgm_read_byte_far(str)) & 0x3F ) << shift );
+	}
+
+	return result;
+}
+
 size_t
 utf8ToUtf32String(
 	uint32_t * 		utf32Str,
@@ -242,6 +263,27 @@ utf8FindNextChar( const char * str )
   }
 
   return (char *)PTR_OFFSET_BYTES( str, utf8GetBytesToNextChar( *str )  );
+};
+
+Utf8FChar *
+utf8FindNextChar( const Utf8FChar * str )
+{
+  /* validate the current str */
+  if( ! utf8IsStartMarker( pgm_read_byte_far(str) ) )
+  {
+    while(1)
+    {
+      str = (const Utf8FChar *)((char *)str + 1);
+      if(utf8IsStartMarker(pgm_read_byte_far(str)))
+      {
+        break;
+      }
+    }
+
+    return const_cast<Utf8FChar*>( str );
+  }
+
+  return (Utf8FChar *)PTR_OFFSET_BYTES( str, utf8GetBytesToNextChar( (char)pgm_read_byte_far(str) )  );
 };
 
 char *
